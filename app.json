@@ -1,0 +1,10 @@
+{
+  "name": "Projeto-final",
+  "slug": "Projeto-final",
+ "plugins": [
+    "expo-router"
+   
+  ],
+    "scheme": "aulafinal"
+
+}
