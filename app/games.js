@@ -1,139 +1,202 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, FlatList, ActivityIndicator, Button, TextInput, Pressable, Alert, StyleSheet } from "react-native";
+import { View, Text, FlatList, Button, TextInput, Pressable, Alert, StyleSheet } from "react-native";
 
 export default function GamesScreen() {
-  const [data, setData] = useState([]);
+  const [gamesList, setGamesList] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  //  variáveis em espanhol porque peguei do exemplo la. Você fez as const em ingles, e eu espanhol.
-  const [idSeleccionado, setIdSeleccionado] = useState(null);
+  // constantes para os campos de texto, botei em português para facilitar.
+  const [selectedId, setSelectedId] = useState(null);
   const [titulo, setTitulo] = useState("");
   const [genero, setGenero] = useState("");
   const [plataforma, setPlataforma] = useState("");
   const [precio, setPrecio] = useState("");
 
+  // constante para o texto da busca
+  const [searchText, setSearchText] = useState("");
+
+  // A API que estou usando que o sor pediu.
   const API = "http://177.44.248.50:8080/games";
 
-  //  Função para carregar os dados
-  async function load() {
-    setLoading(true);
-    const res = await fetch(API);
-    const json = await res.json();
+  // Carrega lista automática ao abrir tela
+  useEffect(() => {
+    loadGames();
+  }, []);
 
-    setData(json);
+  //  Função para carregar os dados
+  async function loadGames() {
+    setLoading(true);
+    let url = API;
+
+    // se houver algo digitado na busca, chama o endpoint de busca
+    if (searchText.trim()) {
+      url = `http://177.44.248.50:8080/games/search?name=${encodeURIComponent(searchText)}`;
+    }
+
+    try {
+      const res = await fetch(url);
+      const json = await res.json();
+      setGamesList(json);
+    } catch (error) {
+      Alert.alert("Erro", "Falha ao carregar jogos");
+    }
+
     setLoading(false);
   }
 
-  // Aqui é onde começam as brincadeiras com create.
-
+  // Aqui é onde começam as brincadeiras com criar.
   async function createGame() {
-    // validação antes de enviar ou seja, se os campos estão vazios.
+    if (loading) return;
+
+    // validação antes de enviar
     if (!titulo.trim() || !genero.trim() || !plataforma.trim() || !precio.trim()) {
       Alert.alert("Campos obrigatórios", "Preencha todos os campos antes de continuar.");
       return;
     }
 
-     const corpo = {
-    title: titulo,
-    slug: titulo.toLowerCase().replace(/\s+/g, "-"),
-    genre: genero,
-    platform: plataforma,
-    price: Number(precio),
-  };
+    const body = {
+      title: titulo,
+      slug: titulo.toLowerCase().replace(/\s+/g, "-"),
+      genre: genero,
+      platform: plataforma,
+      price: Number(precio),
+    };
 
-  const res = await fetch(API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(corpo),
-  });
+    try {
+      setLoading(true);
 
-  if (!res.ok) {
-    Alert.alert("Erro", "Falha ao criar jogo");
+      const res = await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) throw new Error("Falha ao criar jogo");
+
+      await loadGames();
+
+      Alert.alert("Jogo salvo com sucesso!");
+
+      // limpa os campos quando são criados na caixinha de texto.
+      setTitulo("");
+      setGenero("");
+      setPlataforma("");
+      setPrecio("");
+      setSelectedId(null);
+      setSearchText("");
+
+    } catch (error) {
+      Alert.alert("Erro", error.message);
+    }
+
     setLoading(false);
-    return;
   }
 
-  await load();
-
-    // limpa os campos quando são criados na caixinha de texto.
-    setTitulo("");
-    setGenero("");
-    setPlataforma("");
-    setPrecio("");
-    setIdSeleccionado(null);
-
-    setLoading(false);
-  }
-
-  // aqui começa o update
+  // aqui começa o update(atualizar).
   async function updateGame() {
-    if (!idSeleccionado) return;
+    if (!selectedId || loading) return;
 
     if (!titulo.trim() || !genero.trim() || !plataforma.trim() || !precio.trim()) {
       Alert.alert("Campos obrigatórios", "Preencha todos os campos antes de atualizar.");
       return;
     }
 
-
     setLoading(true);
 
-    const corpo = {
-    title: titulo,
-    slug: titulo.toLowerCase().replace(/\s+/g, "-"),
-    genre: genero,
-    platform: plataforma,
-    price: Number(precio),
-  };
+    const body = {
+      title: titulo,
+      slug: titulo.toLowerCase().replace(/\s+/g, "-"),
+      genre: genero,
+      platform: plataforma,
+      price: Number(precio),
+    };
 
-  const res = await fetch(`${API}/${idSeleccionado}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(corpo),
-  });
+    try {
+      const res = await fetch(`${API}/${selectedId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-  if (!res.ok) {
-    Alert.alert("Falha ao atualizar jogo", `Status: ${res.status}`);
-    setLoading(false);
-    return;
-  }
-    
+      if (!res.ok) throw new Error(`Falha ao atualizar jogo (status ${res.status})`);
 
-    await load();
+      Alert.alert("Atualizado com sucesso!");
 
-    // limpa os campos após atualização
-    setTitulo("");
-    setGenero("");
-    setPlataforma("");
-    setPrecio("");
-    setIdSeleccionado(null);
+      await loadGames();
+
+      setTitulo("");
+      setGenero("");
+      setPlataforma("");
+      setPrecio("");
+      setSelectedId(null);
+      setSearchText("");
+
+    } catch (error) {
+      Alert.alert("Erro", error.message);
+    }
 
     setLoading(false);
   }
 
   // aqui começa o delete
   async function deleteGame() {
-    if (!idSeleccionado) return;
+    if (!selectedId || loading) return;
+    //Aqui ja fui muito alem, sei que isso não tinha em aula mas achei interessante colocar um alerta de confirmacao,gosto de procurar firulas novas
+    //Ele pede confirmação antes de deletar    
+    Alert.alert(
+      "Excluir",
+      "Tem certeza que deseja excluir?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Excluir", onPress: confirmDelete }
+      ]
+    );
+  }
 
+  async function confirmDelete() {
     setLoading(true);
 
-    await fetch(`${API}/${idSeleccionado}`, { method: "DELETE" });
+    try {
+      await fetch(`${API}/${selectedId}`, { method: "DELETE" });
+      await loadGames();
 
-    await load();
-    setIdSeleccionado(null);
-    setTitulo("");
-    setGenero("");
-    setPlataforma("");
-    setPrecio("");
+      setSelectedId(null);
+      setTitulo("");
+      setGenero("");
+      setPlataforma("");
+      setPrecio("");
+      setSearchText("");
+
+    } catch (error) {
+      Alert.alert("Erro", "Falha ao deletar jogo");
+    }
+
     setLoading(false);
   }
 
   return (
     <SafeAreaView style={styles.container}>
-
       <Text style={styles.tituloTopo}>Bem vindo ao Maets</Text>
 
-      {/* Linha 1 ou seja as duas caixas de cima  */}
+      {/* Campo de busca */}
+      <View style={styles.row}>
+        <TextInput
+          value={searchText}
+          onChangeText={setSearchText}
+          placeholder="Pesquisar jogo..."
+          style={[styles.input, { flex: 1 }]}
+        />
+        <Pressable
+          style={[styles.botaoPesquisar, { marginLeft: 8, flex: 0 }]}
+          onPress={loadGames}
+          disabled={loading}
+        >
+          <Text style={styles.botaoTexto}>{loading ? "..." : "BUSCAR"}</Text>
+        </Pressable>
+      </View>
+
+      {/* Linha 1 */}
       <View style={styles.row}>
         <View style={styles.box}>
           <Text style={styles.label}>Título</Text>
@@ -156,7 +219,7 @@ export default function GamesScreen() {
         </View>
       </View>
 
-      {/* Linha 2 ou seja as duas caixas de baixo*/}
+      {/* Linha 2 */}
       <View style={styles.row}>
         <View style={styles.box}>
           <Text style={styles.label}>Plataforma</Text>
@@ -180,45 +243,52 @@ export default function GamesScreen() {
         </View>
       </View>
 
-      {/* Botões salvar e pesquisar */}
+      {/* Botões salvar e atualizar */}
       <View style={styles.row}>
-        <Pressable style={styles.botaoPesquisar} onPress={load}>
-          <Text style={styles.botaoTexto}>PESQUISAR</Text>
+        <Pressable
+          style={styles.botaoSalvar}
+          onPress={createGame}
+          disabled={loading}
+        >
+          <Text style={styles.botaoTexto}>{loading ? "..." : "SALVAR"}</Text>
         </Pressable>
 
-        <Pressable style={styles.botaoSalvar} onPress={createGame}>
-          <Text style={styles.botaoTexto}>SALVAR</Text>
-
+        <Pressable
+          style={styles.botaoSalvar}
+          onPress={updateGame}
+          disabled={loading}
+        >
+          <Text style={styles.botaoTexto}>{loading ? "..." : "ATUALIZAR"}</Text>
         </Pressable>
       </View>
 
-      {/* Essa aqui e a caixa de lista  e todo o modelo chato dela */}
+      {/* Lista */}
       <View style={styles.caixaLista}>
         <FlatList
-          data={data}
+          data={gamesList}
           keyExtractor={(item) => String(item.id)}
           ListEmptyComponent={<Text style={{ padding: 12 }}>Nenhum jogo.</Text>}
-
           renderItem={({ item }) => (
-            <View style={styles.itemRow}>
+            <View style={[
+              styles.itemRow,
+              selectedId === item.id && { backgroundColor: "#eef" }
+            ]}>
               <View>
                 <Text style={styles.itemTitulo}>{item.title}</Text>
                 <Text style={styles.itemSub}>{item.genre}</Text>
                 <Text style={styles.itemSub}>{item.platform}</Text>
-                <Text style={styles.itemSub}>R$ {item.price}</Text>
+                <Text style={styles.itemSub}>R$ {Number(item.price).toFixed(2)}</Text>
               </View>
 
               <View style={styles.botaoItemCol}>
                 <Pressable
                   style={styles.btnE}
                   onPress={() => {
-                    setIdSeleccionado(item.id);
+                    setSelectedId(item.id);
                     setTitulo(item.title);
                     setGenero(item.genre);
                     setPlataforma(item.platform);
                     setPrecio(String(item.price));
-                    updateGame();// chama a função de update, tive que colocar aqui para funcionar direito.
-                    setLoading(false);
                   }}
                 >
                   <Text style={styles.btnTexto}>E</Text>
@@ -227,7 +297,7 @@ export default function GamesScreen() {
                 <Pressable
                   style={styles.btnX}
                   onPress={() => {
-                    setIdSeleccionado(item.id);
+                    setSelectedId(item.id);
                     deleteGame();
                   }}
                 >
@@ -241,13 +311,13 @@ export default function GamesScreen() {
     </SafeAreaView>
   );
 }
-// Aqui começa o estilo, a parte chata.
 
+// Aqui começa o estilo, a parte chata.
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 14,
     backgroundColor: "#fff",
+    padding: 16
   },
 
   tituloTopo: {
@@ -257,21 +327,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 10,
     borderRadius: 8,
-    textAlign: "center",
+    textAlign: "center"
   },
 
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 8,
+    marginBottom: 8
   },
 
-  inputMetade: {
-    width: "48%",
+  box: {
+    width: "48%"
+  },
+
+  label: {
+    fontWeight: "700",
+    marginBottom: 6,
+    fontSize: 14
+  },
+
+  input: {
     borderWidth: 1,
     borderColor: "#bbb",
-    borderRadius: 8,
-    padding: 10,
+    padding: 8,
+    borderRadius: 6,
+    fontSize: 16
   },
 
   botaoPesquisar: {
@@ -280,19 +360,21 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     flex: 1,
     marginRight: 8,
-    borderWidth: 1,
+    borderWidth: 1
   },
+
   botaoSalvar: {
     backgroundColor: "#cce5ff",
     padding: 12,
     borderRadius: 8,
     flex: 1,
     marginLeft: 8,
-    borderWidth: 1,
+    borderWidth: 1
   },
+
   botaoTexto: {
     textAlign: "center",
-    fontWeight: "700",
+    fontWeight: "700"
   },
 
   caixaLista: {
@@ -300,7 +382,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     padding: 6,
-    flex: 1,
+    flex: 1
   },
 
   itemRow: {
@@ -308,13 +390,20 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#ddd"
   },
 
-  itemTitulo: { fontWeight: "700" },
-  itemSub: { color: "#555" },
+  itemTitulo: {
+    fontWeight: "700"
+  },
 
-  botaoItemCol: { justifyContent: "center" },
+  itemSub: {
+    color: "#555"
+  },
+
+  botaoItemCol: {
+    justifyContent: "center"
+  },
 
   btnE: {
     backgroundColor: "#e6f0ff",
@@ -322,36 +411,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
     marginBottom: 6,
-    borderRadius: 6,
+    borderRadius: 6
   },
+
   btnX: {
     backgroundColor: "#ffe6e6",
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 6
   },
+
   btnTexto: {
-    fontWeight: "700",
+    fontWeight: "700"
   },
-
-  label: {
-    fontWeight: "700",
-    marginBottom: 6,
-    fontSize: 14,
-  },
-
-  box: {
-    width: "48%",
-  },
-
-  input: {
-    width: "100%",
-    borderWidth: 1,
-    borderColor: "#bbb",
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 16,
-  },
-
 });
