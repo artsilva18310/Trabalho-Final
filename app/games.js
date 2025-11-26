@@ -13,7 +13,7 @@ export default function GamesScreen() {
   const [platform, setPlatform] = useState("");
   const [price, setPrice] = useState("");
 
-  // Constante para o texto da busca, se ta funcionando ou não. ja e outran historia.
+  // Constante para o texto da busca, se ta funcionando ou não. Ai ja e outra historia.
   const [searchText, setSearchText] = useState("");
 
   // A API que estou usando que o sor pediu. pq eu coloquei aqui em cima? Esse metodo é melhor para fazer manutenção no codigo.
@@ -22,7 +22,7 @@ export default function GamesScreen() {
   // Carrega lista automática ao abrir tela
   useEffect(() => {
     loadGames();
-  }, []);
+  }, [searchText]);
 
   //  Função para carregar os dados
   async function loadGames() {
@@ -31,7 +31,7 @@ export default function GamesScreen() {
 
     // Se houver algo digitado na busca, chama o endereço de busca
     if (searchText.trim()) {
-      url = `http://177.44.248.50:8080/games/search?name=${encodeURIComponent(searchText)}`;
+      url = `http://177.44.248.50:8080/games/search?q=${encodeURIComponent(searchText)}`;
     }
     // se der erro na requisição, mostra um alerta
     try {
@@ -45,6 +45,9 @@ export default function GamesScreen() {
     setLoading(false);
   }
 
+  
+  
+  
   // Aqui é onde começam as brincadeiras com criar.
   async function createGame() {
     if (loading) return;
@@ -74,7 +77,7 @@ export default function GamesScreen() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-         Alert.alert("Jogo salvo com sucesso!");
+      Alert.alert("Jogo salvo com sucesso!");
 
       if (!res.ok) throw new Error("Falha ao criar jogo");
 
@@ -95,9 +98,12 @@ export default function GamesScreen() {
     setLoading(false);
   }
 
+  
+  
+  
   // Aqui começa o update(atualizar).
   async function updateGame() {
-   //Toda vez que for atualizar, tem que ter um jogo selecionado.
+    //Toda vez que for atualizar, tem que ter um jogo selecionado.
     if (!selectedId || loading) return;
 
     if (!title.trim() || !genre.trim() || !platform.trim() || !price.trim()) {
@@ -143,7 +149,9 @@ export default function GamesScreen() {
     setLoading(false);
   }
 
-  // aqui começa o delete
+ 
+ 
+  // Aqui começa o delete
   async function deleteGame() {
     if (!selectedId || loading) return;
     //Aqui é um alerda de confirmação.
@@ -161,6 +169,9 @@ export default function GamesScreen() {
   // Função que confirma o delete
   async function confirmDelete() {
     setLoading(true);
+    // Se tirar a confirmção funciona igual 
+
+
 
     try {
       // Aqui ele faz  o funcionamento para deletar
@@ -181,7 +192,7 @@ export default function GamesScreen() {
 
     setLoading(false);
   }
-  
+
   // Aqui começa o retorno da tela
   return (
     <SafeAreaView style={styles.container}>
