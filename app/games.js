@@ -74,12 +74,11 @@ export default function GamesScreen() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
+         Alert.alert("Jogo salvo com sucesso!");
 
       if (!res.ok) throw new Error("Falha ao criar jogo");
 
       await loadGames();
-
-      Alert.alert("Jogo salvo com sucesso!");
 
       // Limpa os campos quando são criados na caixinha de texto.
       setTitle("");
@@ -98,6 +97,7 @@ export default function GamesScreen() {
 
   // Aqui começa o update(atualizar).
   async function updateGame() {
+   //Toda vez que for atualizar, tem que ter um jogo selecionado.
     if (!selectedId || loading) return;
 
     if (!title.trim() || !genre.trim() || !platform.trim() || !price.trim()) {
@@ -163,6 +163,7 @@ export default function GamesScreen() {
     setLoading(true);
 
     try {
+      // Aqui ele faz  o funcionamento para deletar
       await fetch(`${API}/${selectedId}`, { method: "DELETE" });
       await loadGames();
 
@@ -172,6 +173,7 @@ export default function GamesScreen() {
       setPlatform("");
       setPrice("");
       setSearchText("");
+      Alert.alert("jogo deletado com sucesso!");
 
     } catch (error) {
       Alert.alert("Erro", "Falha ao deletar jogo");
@@ -179,6 +181,7 @@ export default function GamesScreen() {
 
     setLoading(false);
   }
+  
   // Aqui começa o retorno da tela
   return (
     <SafeAreaView style={styles.container}>
