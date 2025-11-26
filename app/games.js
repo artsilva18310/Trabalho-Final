@@ -6,17 +6,17 @@ export default function GamesScreen() {
   const [gamesList, setGamesList] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // constantes para os campos de texto, botei em português para facilitar.
+  // Constantes para os campos de texto.
   const [selectedId, setSelectedId] = useState(null);
-  const [titulo, setTitulo] = useState("");
-  const [genero, setGenero] = useState("");
-  const [plataforma, setPlataforma] = useState("");
-  const [precio, setPrecio] = useState("");
+  const [title, setTitle] = useState("");
+  const [genre, setGenre] = useState("");
+  const [platform, setPlatform] = useState("");
+  const [price, setPrice] = useState("");
 
-  // constante para o texto da busca
+  // Constante para o texto da busca, se ta funcionando ou não. ja e outran historia.
   const [searchText, setSearchText] = useState("");
 
-  // A API que estou usando que o sor pediu.
+  // A API que estou usando que o sor pediu. pq eu coloquei aqui em cima? Esse metodo é melhor para fazer manutenção no codigo.
   const API = "http://177.44.248.50:8080/games";
 
   // Carrega lista automática ao abrir tela
@@ -29,11 +29,11 @@ export default function GamesScreen() {
     setLoading(true);
     let url = API;
 
-    // se houver algo digitado na busca, chama o endpoint de busca
+    // Se houver algo digitado na busca, chama o endereço de busca
     if (searchText.trim()) {
       url = `http://177.44.248.50:8080/games/search?name=${encodeURIComponent(searchText)}`;
     }
-
+    // se der erro na requisição, mostra um alerta
     try {
       const res = await fetch(url);
       const json = await res.json();
@@ -50,19 +50,22 @@ export default function GamesScreen() {
     if (loading) return;
 
     // validação antes de enviar
-    if (!titulo.trim() || !genero.trim() || !plataforma.trim() || !precio.trim()) {
+    if (!title.trim() || !genre.trim() || !platform.trim() || !price.trim()) {
       Alert.alert("Campos obrigatórios", "Preencha todos os campos antes de continuar.");
       return;
     }
 
+    // Decidi montar o JSON do body antes do fetch pra deixar o código mais claro.
+    // Achei mais legal fazer assim do que colocar tudo direto dentro do JSON.stringify.
+    // Se um dia eu querer fazer alguma modificação no codigo e mais facil.
     const body = {
-      title: titulo,
-      slug: titulo.toLowerCase().replace(/\s+/g, "-"),
-      genre: genero,
-      platform: plataforma,
-      price: Number(precio),
+      title: title,
+      slug: title.toLowerCase().replace(/\s+/g, "-"),
+      genre: genre,
+      platform: platform,
+      price: Number(price),
     };
-
+    // Aqui lança alerta de sucesso ou falha, se não der certo mostra o erro.
     try {
       setLoading(true);
 
@@ -78,11 +81,11 @@ export default function GamesScreen() {
 
       Alert.alert("Jogo salvo com sucesso!");
 
-      // limpa os campos quando são criados na caixinha de texto.
-      setTitulo("");
-      setGenero("");
-      setPlataforma("");
-      setPrecio("");
+      // Limpa os campos quando são criados na caixinha de texto.
+      setTitle("");
+      setGenre("");
+      setPlatform("");
+      setPrice("");
       setSelectedId(null);
       setSearchText("");
 
@@ -93,23 +96,24 @@ export default function GamesScreen() {
     setLoading(false);
   }
 
-  // aqui começa o update(atualizar).
+  // Aqui começa o update(atualizar).
   async function updateGame() {
     if (!selectedId || loading) return;
 
-    if (!titulo.trim() || !genero.trim() || !plataforma.trim() || !precio.trim()) {
+    if (!title.trim() || !genre.trim() || !platform.trim() || !price.trim()) {
       Alert.alert("Campos obrigatórios", "Preencha todos os campos antes de atualizar.");
       return;
     }
 
     setLoading(true);
 
+    // Aqui foi a mesma coisa la de cima, montar o body antes do fetch.
     const body = {
-      title: titulo,
-      slug: titulo.toLowerCase().replace(/\s+/g, "-"),
-      genre: genero,
-      platform: plataforma,
-      price: Number(precio),
+      title: title,
+      slug: title.toLowerCase().replace(/\s+/g, "-"),// aqui é mais por estetica, se eu tirar ele funciona igual.Mas o sor comentou que era obrigatorio entao ok.
+      genre: genre,
+      platform: platform,
+      price: Number(price),
     };
 
     try {
@@ -125,10 +129,10 @@ export default function GamesScreen() {
 
       await loadGames();
 
-      setTitulo("");
-      setGenero("");
-      setPlataforma("");
-      setPrecio("");
+      setTitle("");
+      setGenre("");
+      setPlatform("");
+      setPrice("");
       setSelectedId(null);
       setSearchText("");
 
@@ -142,7 +146,7 @@ export default function GamesScreen() {
   // aqui começa o delete
   async function deleteGame() {
     if (!selectedId || loading) return;
-    //Aqui ja fui muito alem, sei que isso não tinha em aula mas achei interessante colocar um alerta de confirmacao,gosto de procurar firulas novas
+    //Aqui é um alerda de confirmação.
     //Ele pede confirmação antes de deletar    
     Alert.alert(
       "Excluir",
@@ -154,6 +158,7 @@ export default function GamesScreen() {
     );
   }
 
+  // Função que confirma o delete
   async function confirmDelete() {
     setLoading(true);
 
@@ -162,10 +167,10 @@ export default function GamesScreen() {
       await loadGames();
 
       setSelectedId(null);
-      setTitulo("");
-      setGenero("");
-      setPlataforma("");
-      setPrecio("");
+      setTitle("");
+      setGenre("");
+      setPlatform("");
+      setPrice("");
       setSearchText("");
 
     } catch (error) {
@@ -174,9 +179,10 @@ export default function GamesScreen() {
 
     setLoading(false);
   }
-
+  // Aqui começa o retorno da tela
   return (
     <SafeAreaView style={styles.container}>
+      {/*Título no topo/*/}
       <Text style={styles.tituloTopo}>Bem vindo ao Maets</Text>
 
       {/* Campo de busca */}
@@ -201,18 +207,18 @@ export default function GamesScreen() {
         <View style={styles.box}>
           <Text style={styles.label}>Título</Text>
           <TextInput
-            value={titulo}
-            onChangeText={setTitulo}
+            value={title}
+            onChangeText={setTitle}
             placeholder="Título..."
             style={styles.input}
           />
         </View>
-
+        {/* segunda caixinha */}
         <View style={styles.box}>
           <Text style={styles.label}>Gênero</Text>
           <TextInput
-            value={genero}
-            onChangeText={setGenero}
+            value={genre}
+            onChangeText={setGenre}
             placeholder="Gênero..."
             style={styles.input}
           />
@@ -224,18 +230,18 @@ export default function GamesScreen() {
         <View style={styles.box}>
           <Text style={styles.label}>Plataforma</Text>
           <TextInput
-            value={plataforma}
-            onChangeText={setPlataforma}
+            value={platform}
+            onChangeText={setPlatform}
             placeholder="Plataforma..."
             style={styles.input}
           />
         </View>
-
+        {/* segunda caixinha */}
         <View style={styles.box}>
           <Text style={styles.label}>Preço</Text>
           <TextInput
-            value={precio}
-            onChangeText={setPrecio}
+            value={price}
+            onChangeText={setPrice}
             placeholder="Preço..."
             keyboardType="numeric"
             style={styles.input}
@@ -285,10 +291,10 @@ export default function GamesScreen() {
                   style={styles.btnE}
                   onPress={() => {
                     setSelectedId(item.id);
-                    setTitulo(item.title);
-                    setGenero(item.genre);
-                    setPlataforma(item.platform);
-                    setPrecio(String(item.price));
+                    setTitle(item.title);
+                    setGenre(item.genre);
+                    setPlatform(item.platform);
+                    setPrice(String(item.price));
                   }}
                 >
                   <Text style={styles.btnTexto}>E</Text>
@@ -311,6 +317,7 @@ export default function GamesScreen() {
     </SafeAreaView>
   );
 }
+
 
 // Aqui começa o estilo, a parte chata.
 const styles = StyleSheet.create({
